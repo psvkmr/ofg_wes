@@ -19,7 +19,7 @@ do
 done
 
 # annotate all chr vcfs with prefix provided as arg on command line
-sbatch ${base_dir}/scripts/guys_projects/vep_chr.sh /scratch/users/k2142172/outputs/ofg/ofg_chr
+sbatch ${base_dir}/scripts/misc_projects/vep_chr.sh /scratch/users/k2142172/outputs/ofg/ofg_chr
 
 # extract the CSQ and header sections from a vcf
 $bcftools view -h  ${out_dir}/ofg_chr22.vcf.gz.batch.vep.vcf | grep CSQ > ${out_dir}/ofg_vep_anno_csq.txt
@@ -28,7 +28,11 @@ $bcftools view -h ${out_dir}/ofg_chr22.vcf.gz.batch.vep.vcf | tail -n 1 > ${out_
 # create tsv file convert from vcf for each chr with headers and csq as additional args
 for i in `seq 1 22`;
 do
-  sbatch ${base_dir}/scripts/vcf_to_tsv.sh ${out_dir}/ofg_chr${i}.vcf.gz.batch.vep.vcf ${out_dir}/ofg_vep_anno_headers.txt ${out_dir}/ofg_vep_anno_csq.txt
+  sbatch ${base_dir}/scripts/misc_scripts/vcf_to_tsv.sh ${out_dir}/ofg_chr${i}.vcf.gz.batch.vep.vcf ${out_dir}/ofg_vep_anno_headers.txt ${out_dir}/ofg_vep_anno_csq.txt
 done
 
-conda activate r4
+# merge chr data into RData file
+sbatch ${base_dir}/scripts/ofg_wes/ofg_merge_chr_outputs.R
+
+# filter chr data for variants of interest
+sbatch ${base_dir}/scripts/ofg_wes/ofg_filter_chr_outputs.R

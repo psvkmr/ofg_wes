@@ -1,6 +1,6 @@
 library(tidyverse)
 
-ofg.dir <- '/scratch/users/k2142172/outputs/ofg_wes/'
+ofg.dir <- '/scratch/users/k2142172/outputs/ofg/'
 ofg.files <- list.files(path = ofg.dir, pattern = 'ofg_chr.*.vcf.gz.batch.vep.vcf.processed.tsv',
 full.names = T)
 ofg <- lapply(ofg.files, read_table)
