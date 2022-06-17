@@ -32,7 +32,7 @@ do
 done
 
 # merge chr data into RData file
-sbatch ${base_dir}/scripts/ofg_wes/ofg_merge_chr_outputs.R
+sbatch ${base_dir}/scripts/ofg_wes/run_ofg_merge.sh
 
 # filter chr data for variants of interest
-sbatch ${base_dir}/scripts/ofg_wes/ofg_filter_chr_outputs.R
+sbatch ${base_dir}/scripts/ofg_wes/run_ofg_filter.sh
