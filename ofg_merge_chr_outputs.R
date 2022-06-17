@@ -1,9 +1,10 @@
 library(tidyverse)
+library(data.table)
 
 ofg.dir <- '/scratch/users/k2142172/outputs/ofg/'
 ofg.files <- list.files(path = ofg.dir, pattern = 'ofg_chr.*.vcf.gz.batch.vep.vcf.processed.tsv',
 full.names = T)
-ofg <- lapply(ofg.files, read_table)
+ofg <- lapply(ofg.files, fread)
 ofg.names <- str_extract(ofg.files, 'chr[0-9]+')
 names(ofg) <- ofg.names
 
