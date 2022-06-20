@@ -2,10 +2,10 @@
 
 #SBATCH --partition=brc,shared
 #SBATCH --job-name=r_merge
-#SBATCH --time=04:00:00
-#SBATCH --mem=64G
-#SBATCH --ntasks=4
-#SBATCH --cpus-per-task=8
+#SBATCH --time=02:00:00
+#SBATCH --mem=32G
+#SBATCH --ntasks=2
+#SBATCH --cpus-per-task=4
 #SBATCH --output=/scratch/users/%u/tests/ofg_merge_chr_outputs_%J.out
 #SBATCH --verbose
 

@@ -27,8 +27,11 @@ filterData <- function(df){
 ofg.filt <- lapply(ofg, filterData)
 all.ofg.filt <- Reduce(rbind, ofg.filt) %>% arrange(CHROM, POS)
 
-for (i in 1:length(ofg.filt)){
-  write.table(ofg.filt[[i]], paste0(ofg.dir, 'ofg_', names(ofg.filt)[[i]], '_filtered_variants.tsv'), sep = '\t', row.names = F, quote = F)
+# more stringent
+stringentFilt <- function(df){
+  df <- filter(df, MAX_AF < 0.0001 | (is.na(Existing_variation) & is.na(MAX_AF)))
+  df <- df[!df$SYMBOL %in% exclude.genes$X1, ]
+  return(df)
 }
 write.table(all.ofg.filt, paste0(ofg.dir, 'all_ofg_filtered_variants.tsv'), sep = '\t', row.names = F, quote = F)
 
