@@ -10,7 +10,7 @@ exclude.genes <- read_table('/scratch/users/k2142172/resources/flagged_genes_to_
 
 # should be done already
 filterData <- function(df){
-    df <- df %>% select(-c(contains('EGAN'), 'AFR_AF', 'AMR_AF', 'EAS_AF', 'SAS_AF',
+    df <- df %>% select(-c('AFR_AF', 'AMR_AF', 'EAS_AF', 'SAS_AF',
         'AA_AF', 'gnomAD_AFR_AF', 'gnomAD_ASJ_AF', 'gnomAD_EAS_AF', 'gnomAD_FIN_AF', 'gnomAD_SAS_AF')) %>%
         filter(IMPACT %in% c('HIGH', 'MODERATE'))
     df <- as.data.frame(apply(df, 2, function(x) gsub("^$", NA, x)))
@@ -21,6 +21,8 @@ filterData <- function(df){
     df <- filter(df, AN > 400)
     df <- filter(df, (is.na(Existing_variation)) | (is.na(MAX_AF) & is.na(AF)) | (is.na(CADD_PHRED) & is.na(SIFT_score) & is.na(PolyPhen_score))
         | (MAX_AF < 0.001) | (CADD_PHRED > 30) | (SIFT_score < 0.05) | (PolyPhen_score > 0.15))
+    df <- select(df, -contains('EGAN'), contains('EGAN'))
+    df <- mutate(df, across(.cols = contains('EGAN'), ~ gsub(':.*$', '', .x)))
     return(df)
 }
 
