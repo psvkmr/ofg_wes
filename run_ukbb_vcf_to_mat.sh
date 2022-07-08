@@ -9,4 +9,4 @@
 #SBATCH --verbose
 #SBATCH --output=/scratch/users/k2142172/tests/vcfToMat.out
 
-Rscript ukbb_vcf_to_mat.R
+Rscript /scratch/users/k2142172/scripts/ofg_wes/ukbb_vcf_to_mat.R
