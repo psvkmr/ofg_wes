@@ -91,50 +91,69 @@ as.ukbb.ids$ID <- gsub('chr', '', as.ukbb.ids$ID)
 as.ukbb.ids$ID <- gsub('_', ':', as.ukbb.ids$ID)
 as.ukbb.ids <- split(as.ukbb.ids, as.ukbb.ids$CHROM)
 as.ukbb.ids <- lapply(as.ukbb.ids, function(x) unlist(strsplit(x$ID, ';')))
+
+################################ used to create matrix for the first time
 # for (i in seq(1, 22)){
 #   write.table(as.ukbb.ids[[i]], paste0('top_hits_ukbb/vars_as_ukbb_ids_', i, '.txt'), quote = F, row.names = F, col.names = F)
 # }
 
 # load vcf data file for vars of interest, takes a while since so many columns
-vcf <- vroom::vroom('top_hits_ukbb/vars_from_ukbb_22.vcf', delim = '\t', comment = '##')
+# vcfs <- list()
+# Sys.time()
+# for (i in seq(1, 22)){
+#   vcf <- read_delim(paste0('top_hits_ukbb/vars_from_ukbb_', i, '.vcf'), delim = '\t', comment = '##')
+#   vcfs[[i]] <- vcf
+# }
+# Sys.time()
+
+#vcf <- read_delim(paste0('top_hits_ukbb/vars_from_ukbb_', 22, '.vcf'), delim = '\t', comment = '##')
+#vcf <- vroom::vroom('top_hits_ukbb/vars_from_ukbb_22.vcf', delim = '\t', comment = '##')
 # remove info fields, convert genotypes to integers to make matrix
-vcf.mat <- vcf[, -c(1:9)]
+#vcf.mats <- lapply(vcfs, function(x) x[, -c(1:9)])
 #vcf.mat <- vcf.mat[, 1:20000]
 
-vcfToMatGsubs <- function(x){
-  xa <- gsub(':.*$', '', x)
-  
-  if(xa == '0/0'){
-    xb <- gsub('0/0', 0, xa)
-  } else if(xa == '0/1'){
-    xb <- gsub('0/1', 1, xa)
-  } else if(xa == '1/0'){
-    xb <- gsub('1/0', 1, xa)
-  } else if(xa == '1/1'){
-    xb <- gsub('1/1', 2, xa)
-  } else if(xa == './.'){
-    xb <- gsub('\\./\\.', NA, xa)
-  } else{
-    print(xa)
-    stop('unrecognised genotype')
-  }
-  
-  return(xb)
-}
+# vcfToMatGsubs <- function(x){
+#   xa <- gsub(':.*$', '', x)
+#   
+#   if(xa == '0/0'){
+#     xb <- gsub('0/0', 0, xa)
+#   } else if(xa == '0/1'){
+#     xb <- gsub('0/1', 1, xa)
+#   } else if(xa == '1/0'){
+#     xb <- gsub('1/0', 1, xa)
+#   } else if(xa == '1/1'){
+#     xb <- gsub('1/1', 2, xa)
+#   } else if(xa == './.'){
+#     xb <- gsub('\\./\\.', NA, xa)
+#   } else{
+#     print(xa)
+#     stop('unrecognised genotype')
+#   }
+#   
+#   return(xb)
+# }
 
+#Sys.time()
+#vcf.mats2 <- lapply(vcf.mats, function(x) apply(x, c(1,2), vcfToMatGsubs))
+#Sys.time()
 
-Sys.time()
-vcf.mat <- apply(vcf.mat, c(1,2), vcfToMatGsubs)
-Sys.time()
-print('done')
-
-vcf.mat <- apply(vcf.mat, c(1,2), as.integer)
-vcf.mat <- as.matrix(vcf.mat)
+#vcf.mats3 <- lapply(vcf.mats2, function(x) apply(x, c(1,2), as.integer))
+#vcf.mats3 <- lapply(vcf.mats3, as.matrix)
 # divide total counts for alleles by total allele number to get frequency
-vcf.rowsums <- rowSums(vcf.mat, na.rm = T) / (ncol(vcf.mat)*2)
-vcf.df <- data.frame(vcf[, 1:8], vcf.rowsums)
-vcf.df$ID <- gsub(':', '_', vcf.df$ID)
-vcf.df$ID <- gsub('^', 'chr', vcf.df$ID)
+
+#######################################used to create matrix for the first time
+
+# load pre made, much quicker 
+load('ukbb_vcf_as_mat.RData')
+
+vcf.rowsums <- lapply(vcf.mats3, function(x) rowSums(x, na.rm = T) / (ncol(x)*2))
+vcf.dfs <- list()
+for (i in 1:length(vcf.rowsums)){
+  vcf.dfs[[i]] <- data.frame(vcfs[[i]][, 1:8], vcf.rowsums[[i]])
+  vcf.dfs[[i]]$ID <- gsub(':', '_', vcf.dfs[[i]]$ID)
+  vcf.dfs[[i]]$ID <- gsub('^', 'chr', vcf.dfs[[i]]$ID)
+}
+vcf.df <- Reduce(bind_rows, vcf.dfs)
 ofg.hits.ukbb <- left_join(ofg.hits, vcf.df, by = 'ID')
 ofg.hits.ukbb.nona <- ofg.hits.ukbb[!is.na(ofg.hits.ukbb$vcf.rowsums), ]
 ofg.hits.ukbb.nona$diff <- ofg.hits.ukbb.nona$VCF_AF / ofg.hits.ukbb.nona$vcf.rowsums
