@@ -1,3 +1,5 @@
+library(tidyverse)
+
 # load vcf data file for vars of interest, takes a while since so many columns
 vcfs <- list()
 Sys.time()
