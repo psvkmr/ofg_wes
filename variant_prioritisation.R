@@ -46,18 +46,27 @@ top.hits$novel <- ofg.keycols[is.na(ofg.keycols$Existing_variation), 'ID']
 #top.hits$rare <- ofg.keycols[(ofg.keycols$MAX_AF < 0.01) | (is.na(ofg.keycols$MAX_AF)), 'ID']
 top.hits$high_cadd <- ofg.keycols[ofg.keycols$CADD_PHRED > 20, 'ID']
 top.hits$gene <- ofg.keycols[ofg.keycols$SYMBOL %in% top.filt.genes$SYMBOL, 'ID']
-top.hits$polyphen <- ofg.keycols[ofg.keycols$PolyPhen_score > 0.8, 'ID']
-top.hits$sift <- ofg.keycols[ofg.keycols$SIFT_score <= 0.05, 'ID']
+#top.hits$polyphen <- ofg.keycols[ofg.keycols$PolyPhen_score > 0.8, 'ID']
+#top.hits$sift <- ofg.keycols[ofg.keycols$SIFT_score <= 0.05, 'ID']
 top.hits$gerp <- ofg.keycols[ofg.keycols$Conservation >= 2, 'ID']
+top.hits$polyphen_sift <- ofg.keycols[(ofg.keycols$PolyPhen_score > 0.8 & ofg.keycols$SIFT_score <= 0.05), 'ID']
 
 # upset plot to show interactions
-# upset(fromList(top.hits), nsets = 10, nintersects = NA, scale.intersections = 'log2', 
-#       scale.sets = 'log2')
+upset(fromList(top.hits), nsets = 10, nintersects = NA)
 
 var.hits <- Reduce(intersect, list(top.hits$gene, top.hits$high_cadd, 
-                                   top.hits$polyphen, top.hits$sift, top.hits$gerp))
+                                   top.hits$polyphen_sift, top.hits$gerp))
 ofg.hits <- ofg.keycols[ofg.keycols$ID %in% var.hits, ]
 ofg.hits %>% group_by(SYMBOL) %>% summarise(count = sum(AC)) %>% arrange(desc(count))
+
+
+# novel variants specifically
+
+novel.ofg <- filter(ofg.keycols, is.na(Existing_variation))
+novel.top.filt.genes <- novel.ofg %>% filter(IMPACT == 'HIGH') %>% group_by(SYMBOL) %>% summarise(count = sum(AC)) %>% 
+  filter(count > 10) %>% arrange(desc(count))
+novel.ofg.ukbb <- left_join(novel.ofg, vcf.df, by = 'ID')
+novel.ofg.ukbb$diff <- novel.ofg.ukbb$VCF_AF / novel.ofg.ukbb$vcf.rowsums
 
 
 #===============================================================================
@@ -91,26 +100,29 @@ as.ukbb.ids$ID <- gsub('chr', '', as.ukbb.ids$ID)
 as.ukbb.ids$ID <- gsub('_', ':', as.ukbb.ids$ID)
 as.ukbb.ids <- split(as.ukbb.ids, as.ukbb.ids$CHROM)
 as.ukbb.ids <- lapply(as.ukbb.ids, function(x) unlist(strsplit(x$ID, ';')))
-
-################################ used to create matrix for the first time
 # for (i in seq(1, 22)){
 #   write.table(as.ukbb.ids[[i]], paste0('top_hits_ukbb/vars_as_ukbb_ids_', i, '.txt'), quote = F, row.names = F, col.names = F)
 # }
+ofg.filt.ukbb.ids <- ofg
+ofg.filt.ukbb.ids$ID <- gsub('chr', '', ofg.filt.ukbb.ids$ID)
+ofg.filt.ukbb.ids$ID <- gsub('_', ':', ofg.filt.ukbb.ids$ID)
+ofg.filt.ukbb.ids <- split(ofg.filt.ukbb.ids, ofg.filt.ukbb.ids$CHROM)
+ofg.filt.ukbb.ids <- lapply(ofg.filt.ukbb.ids, function(x) unlist(strsplit(x$ID, ';')))
+# for (i in seq(1, 22)){
+#   write.table(ofg.filt.ukbb.ids[[i]], paste0('ofg_filt_ukbb/vars_as_ukbb_ids_', i, '.txt'), quote = F, row.names = F, col.names = F)
+# }
 
 # load vcf data file for vars of interest, takes a while since so many columns
-# vcfs <- list()
-# Sys.time()
-# for (i in seq(1, 22)){
-#   vcf <- read_delim(paste0('top_hits_ukbb/vars_from_ukbb_', i, '.vcf'), delim = '\t', comment = '##')
-#   vcfs[[i]] <- vcf
-# }
-# Sys.time()
+vcfs <- list()
+Sys.time()
+for (i in seq(1, 22)){
+  vcf <- read_delim(paste0('top_hits_ukbb/vars_from_ukbb_', i, '.vcf'), delim = '\t', comment = '##')
+  vcfs[[i]] <- vcf
+}
+Sys.time()
 
-#vcf <- read_delim(paste0('top_hits_ukbb/vars_from_ukbb_', 22, '.vcf'), delim = '\t', comment = '##')
-#vcf <- vroom::vroom('top_hits_ukbb/vars_from_ukbb_22.vcf', delim = '\t', comment = '##')
-# remove info fields, convert genotypes to integers to make matrix
-#vcf.mats <- lapply(vcfs, function(x) x[, -c(1:9)])
-#vcf.mat <- vcf.mat[, 1:20000]
+
+################################ used to create matrix for the first time
 
 # vcfToMatGsubs <- function(x){
 #   xa <- gsub(':.*$', '', x)
